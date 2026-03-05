@@ -44,22 +44,45 @@ resize_keyboard: true
 
 })
 
-bot.onText(/\/ping/, (msg)=>{
+bot.onText(/\/ping/, async (msg) => {
 
 const chatId = msg.chat.id
+const start = Date.now()
 
-const uptime = Math.floor((Date.now() - startTime) / 1000)
-const date = new Date().toLocaleString()
+// First message
+await bot.sendMessage(chatId,"📡 Pinging...")
 
-const caption = `📡 *StainAI System Status*
+// latency calculation
+const latency = Date.now() - start
+
+// uptime calculation
+const uptime = process.uptime()
+const hours = Math.floor(uptime / 3600)
+const minutes = Math.floor((uptime % 3600) / 60)
+const seconds = Math.floor(uptime % 60)
+
+const uptimeText = `${hours}h ${minutes}m ${seconds}s`
+
+// date + time
+const now = new Date()
+const date = now.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})
+const time = now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})
+
+// caption
+const caption = `🛰 *StainAI System Status*
 
 🤖 Bot Status: Online  
-⏱ Uptime: ${uptime} seconds  
-📅 Date & Time: ${date}
+⚡ Latency: ${latency} ms  
+⏱ Uptime: ${uptimeText}  
+📅 Date: ${date}  
+🕒 Time: ${time}
 
-"Discipline turns small actions into powerful results."`
+"Discipline today creates power tomorrow."`
 
-bot.sendPhoto(chatId,pingImage,{
+// send image with report
+bot.sendPhoto(chatId,
+"https://res.cloudinary.com/dvpnd4wrq/image/upload/v1772691429/Dynamic%20folders/upload_1772691429.jpg",
+{
 caption,
 parse_mode:"Markdown"
 })
