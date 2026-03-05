@@ -1,40 +1,60 @@
-const TelegramBot = require("node-telegram-bot-api");
-const axios = require("axios");
-const express = require("express");
+const TelegramBot = require("node-telegram-bot-api")
+const axios = require("axios")
+const express = require("express")
 
-console.log("✅ StainAI Loaded, starting bot...");
+const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true })
 
-const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
+const app = express()
+app.get("/", (req, res) => res.send("StainAI Running"))
+app.listen(process.env.PORT || 3000)
 
-const app = express();
-app.get("/", (req, res) => res.send("StainAI Running"));
-app.listen(process.env.PORT || 3000);
+const SESSION_TIMEOUT = Number(process.env.SESSION_TIMEOUT) || 300000
 
-const SESSION_TIMEOUT = Number(process.env.SESSION_TIMEOUT) || 300000;
-let sessions = {};
+let sessions = {}
 
-const startImage = "https://i.ibb.co/cSQVfxp5/d3e716fb89edd137dc750918ccfe22e8.jpg";
-const pingImage = "https://res.cloudinary.com/dvpnd4wrq/image/upload/v1772691429/Dynamic%20folders/upload_1772691429.jpg";
-const devImage = "https://i.postimg.cc/VNW476yJ/4d59188bad5eb3f3043447cbb97076c8.jpg";
+const startImage = "https://i.ibb.co/cSQVfxp5/d3e716fb89edd137dc750918ccfe22e8.jpg"
+const pingImage = "https://res.cloudinary.com/dvpnd4wrq/image/upload/v1772691429/Dynamic%20folders/upload_1772691429.jpg"
+const devImage = "https://i.postimg.cc/VNW476yJ/4d59188bad5eb3f3043447cbb97076c8.jpg"
+
+const startTime = Date.now()
 
 bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  const caption = `🤖 *Welcome to StainAI.*
 
-An integrated artificial intelligence assistant designed to help you generate ideas, answer questions, and solve problems efficiently.
+const chatId = msg.chat.id
 
-Use the buttons below to navigate through available commands.
+const caption = `🤖 *Welcome to StainAI.*
 
-⚡ Intelligent assistance at your fingertips.`;
+An integrated artificial intelligence assistant designed to help generate ideas, answer questions, and solve problems efficiently.
 
-  bot.sendPhoto(chatId, startImage, {
-    caption,
-    parse_mode: "Markdown",
-    reply_markup: {
-      keyboard: [["/ai", "/ping"], ["/dev", "/support"]],
-      resize_keyboard: true,
-    },
-  });
+Use the buttons below to navigate.
+
+⚡ Intelligent assistance at your fingertips.`
+
+bot.sendPhoto(chatId, startImage, {
+caption,
+parse_mode:"Markdown",
+reply_markup:{
+keyboard:[
+["/ai","/ping"],
+["/dev","/support"]
+],
+resize_keyboard:true
+}
+})
+
+})
+
+bot.onText(/\/ping/, (msg)=>{
+
+const chatId = msg.chat.id
+
+const uptime = Math.floor((Date.now() - startTime) / 1000)
+const date = new Date().toLocaleString()
+
+const caption = `📡 *StainAI System Status*
+
+🤖 Bot Status: Online
+⏱  });
 });
 
 bot.onText(/\/ping/, async (msg) => {
