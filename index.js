@@ -159,52 +159,91 @@ Start a new session anytime using /ai`,
 })
 
 bot.on("message", async (msg)=>{
+// AI SESSION START
+bot.onText(/\/ai/, (msg)=>{
+    const chatId = msg.chat.id
 
-const chatId = msg.chat.id
-const text = msg.text
+    sessions[chatId] = {
+        last: Date.now()
+    }
 
-if(!sessions[chatId]) return
-if(!text) return
-if(text.startsWith("/")) return
-
-if(Date.now() - sessions[chatId].last > SESSION_TIMEOUT){
-
-delete sessions[chatId]
-
-bot.sendMessage(chatId,"⚠️ Session expired. Start again with /ai")
-return
-
-}
-
-sessions[chatId].last = Date.now()
-
-let reply = null
-
-try{
-
-const response = await axios.post(
-"https://openrouter.ai/api/v1/chat/completions",
-{
-model:"mistralai/mistral-7b-instruct",
-messages:[
-{role:"user",content:text}
-]
-},
-{
-headers:{
-Authorization:`Bearer ${process.env.OPENROUTER_KEY}`,
-"Content-Type":"application/json"
-}
+    bot.sendMessage(chatId,"🤖 StainAI is thinking...")
 })
 
-reply = response.data.choices[0].message.content
 
-}catch(e){
+// AI MESSAGE HANDLER
+bot.on("message", async (msg) => {
 
-reply = "⚠️ AI service is temporarily unavailable. Please try again shortly."
+    const chatId = msg.chat.id
+    const text = msg.text
 
-}
+    if(!sessions[chatId]) return
+    if(!text) return
+    if(text.startsWith("/")) return
 
-bot.sendMessage(chatId,reply)
+    if(Date.now() - sessions[chatId].last > SESSION_TIMEOUT){
+
+        delete sessions[chatId]
+
+        bot.sendMessage(chatId,"⚠️ Session expired. Start again with /ai")
+        return
+
+    }
+
+    sessions[chatId].last = Date.now()
+
+    let reply = null
+
+    try{
+
+        // show typing indicator
+        bot.sendChatAction(chatId, "typing")
+
+        // COHERE PRIMARY AI
+        const cohere = await axios.post(
+            "https://api.cohere.ai/v1/chat",
+            {
+                model:"command-r",
+                message:text
+            },
+            {
+                headers:{
+                    Authorization:`Bearer ${process.env.COHERE_KEY}`,
+                    "Content-Type":"application/json"
+                }
+            }
+        )
+
+        reply = cohere.data.message.text
+
+    }catch(e){
+
+        try{
+
+            // GROQ BACKUP AI
+            const groq = await axios.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                {
+                    model:"llama3-70b-8192",
+                    messages:[{role:"user",content:text}]
+                },
+                {
+                    headers:{
+                        Authorization:`Bearer ${process.env.GROQ_KEY}`
+                    }
+                }
+            )
+
+            reply = groq.data.choices[0].message.content
+
+        }catch(e){
+
+            reply = "⚠️ AI service is temporarily unavailable. Please try again shortly."
+
+        }
+
+    }
+
+    bot.sendMessage(chatId, reply)
 
 })
