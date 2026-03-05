@@ -37,16 +37,35 @@ Use the buttons below to navigate through available commands.
   });
 });
 
-bot.onText(/\/ping/, (msg) => {
+bot.onText(/\/ping/, async (msg) => {
   const chatId = msg.chat.id;
+
+  const startTime = Date.now();
+  // Simple ping calculation
+  const sentMessage = await bot.sendMessage(chatId, "📡 Pinging...");
+  const latency = Date.now() - startTime;
+
+  const uptimeMs = process.uptime() * 1000;
+  const uptimeHours = Math.floor(uptimeMs / 3600000);
+  const uptimeMinutes = Math.floor((uptimeMs % 3600000) / 60000);
+  const uptimeSeconds = Math.floor((uptimeMs % 60000) / 1000);
+
+  const now = new Date();
+  const dateTime = now.toLocaleString("en-GB", { timeZone: "Africa/Lagos" });
+
+  const motivationalQuote = `"The only limit to our realization of tomorrow is our doubts of today." 🌟`;
+
   const caption = `📡 *StainAI System Status*
 
 ✅ Bot Status: Online  
-⚡ Response Time: Fast  
+⚡ Latency: ${latency}ms  
+⏱ Uptime: ${uptimeHours}h ${uptimeMinutes}m ${uptimeSeconds}s  
+🗓 Date & Time: ${dateTime}  
 🧠 AI Systems: Operational  
 
-"Progress begins with curiosity and discipline."`;
+${motivationalQuote}`;
 
+  // Send ping image + caption
   bot.sendPhoto(chatId, pingImage, { caption, parse_mode: "Markdown" });
 });
 
