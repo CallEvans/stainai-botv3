@@ -128,68 +128,194 @@ You may start a new session anytime using /ai`,
 });
 
 bot.on("message", async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text;
-  if (!sessions[chatId]) return;
-  if (text.startsWith("/")) return;
 
-  if (Date.now() - sessions[chatId].last > SESSION_TIMEOUT) {
-    delete sessions[chatId];
-    bot.sendMessage(chatId, "⚠️ Session expired. Start again with /ai", {
-      parse_mode: "Markdown",
-    });
-    return;
-  }
+const chatId = msg.chat.id
+const text = msg.text
 
-  sessions[chatId].last = Date.now();
-  let reply = null;
+if(!sessions[chatId]) return
+if(!text) return
+if(text.startsWith("/")) return
 
-  try {
-    // Groq
-    const groq = await axios.post(
-      "https://api.groq.com/v1/completions",
-      {
-        model: "llama3-70b-8192",
-        messages: [{ role: "user", content: text }],
-      },
-      { headers: { Authorization: `Bearer ${process.env.GROQ_KEY}` } }
-    );
-    reply = groq.data.choices[0].message.content;
-  } catch (e1) {
-    try {
-      // Google Gemini
-      const gemini = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_KEY}`,
-        { contents: [{ parts: [{ text }] }] }
-      );
-      reply = gemini.data.candidates[0].content.parts[0].text;
-    } catch (e2) {
-      try {
-        // TogetherAI
-        const together = await axios.post(
-          "https://api.together.xyz/v1/chat/completions",
-          {
-            model: "mistralai/Mistral-7B-Instruct-v0.1",
-            messages: [{ role: "user", content: text }],
-          },
-          { headers: { Authorization: `Bearer ${process.env.TOGETHER_KEY}` } }
-        );
-        reply = together.data.choices[0].message.content;
-      } catch (e3) {
-        try {
-          // HuggingFace
-          const hf = await axios.post(
-            "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
-            { inputs: text },
-            { headers: { Authorization: `Bearer ${process.env.HF_KEY}` } }
-          );
-          reply = hf.data?.generated_text || "AI services are temporarily unavailable. Please try again shortly.";
-        } catch (e4) {
-          reply = "AI services are temporarily unavailable. Please try again shortly.";
-        }
-      }
-    }
-  }
+if(Date.now() - sessions[chatId].last > SESSION_TIMEOUT){
 
-  bot.sendMessage(chatId, reply, { parse_mode: "Markdown" });
-});
+delete sessions[chatId]
+
+bot.sendMessage(chatId,"⚠️ Session expired. Start again with /ai")
+return
+
+}
+
+sessions[chatId].last = Date.now()
+
+let reply = null
+
+try{
+
+const groq = await axios.post(
+"https://api.groq.com/openai/v1/chat/completions",
+{
+model:"llama3-70b-8192",
+messages:[{role:"user",content:text}]
+},
+{
+headers:{
+Authorization:`Bearer ${process.env.GROQ_KEY}`
+}
+})
+
+reply = groq.data.choices[0].message.content
+
+}catch(e){
+
+try{
+
+const gemini = await axios.post(
+`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_KEY}`,
+{
+contents:[{parts:[{text:text}]}]
+})
+
+reply = gemini.data.candidates[0].content.parts[0].text
+
+}catch(e){
+
+try{
+
+const together = await axios.post(
+"https://api.together.xyz/v1/completions",
+{
+model:"mistralai/Mistral-7B-Instruct-v0.1",
+bot.on("message", async (msg) => {
+
+const chatId = msg.chat.id
+const text = msg.text
+
+if(!sessions[chatId]) return
+if(!text) return
+if(text.startsWith("/")) return
+
+if(Date.now() - sessions[chatId].last > SESSION_TIMEOUT){
+
+delete sessions[chatId]
+bot.sendMessage(chatId,"⚠️ Session expired. Start again with /ai")
+return
+
+}
+
+sessions[chatId].last = Date.now()
+
+let reply = null
+
+try{
+
+const groq = await axios.post(
+"https://api.groq.com/openai/v1/chat/completions",
+{
+model:"llama3-70b-8192",
+messages:[{role:"user",content:text}]
+},
+{
+headers:{ Authorization:`Bearer ${process.env.GROQ_KEY}` }
+})
+
+reply = groq.data.choices[0].message.content
+
+}catch(e){
+
+try{
+
+const gemini = await axios.post(
+`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_KEY}`,
+{
+contents:[{parts:[{text:text}]}]
+})
+
+reply = gemini.data.candidates[0].content.parts[0].text
+
+}catch(e){
+
+try{
+
+const together = await axios.post(
+"https://api.together.xyz/v1/completions",
+{
+model:"mistralai/Mistral-7B-Instruct-v0.1",
+prompt:text,
+max_tokens:500
+},
+{
+headers:{ Authorization:`Bearer ${process.env.TOGETHER_KEY}` }
+})
+
+reply = together.data.choices[0].text
+
+}catch(e){
+
+try{
+
+const openrouter = await axios.post(
+"https://openrouter.ai/api/v1/chat/completions",
+{
+model:"mistralai/mistral-7b-instruct",
+messages:[{role:"user",content:text}]
+},
+{
+headers:{
+Authorization:`Bearer ${process.env.OPENROUTER_KEY}`,
+"Content-Type":"application/json"
+}
+})
+
+reply = openrouter.data.choices[0].message.content
+
+}catch(e){
+
+try{
+
+const hf = await axios.post(
+"https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
+{inputs:text},
+{
+headers:{ Authorization:`Bearer ${process.env.HF_KEY}` }
+})
+
+reply = JSON.stringify(hf.data)
+
+}catch(e){
+
+try{
+
+const deepinfra = await axios.post(
+"https://api.deepinfra.com/v1/openai/chat/completions",
+{
+model:"meta-llama/Meta-Llama-3-8B-Instruct",
+messages:[{role:"user",content:text}]
+},
+{
+headers:{
+Authorization:`Bearer ${process.env.DEEPINFRA_KEY}`,
+"Content-Type":"application/json"
+}
+})
+
+reply = deepinfra.data.choices[0].message.content
+
+}catch(e){
+
+reply = "AI services are temporarily unavailable. Please try again shortly."
+
+}
+
+}
+
+}
+
+}
+
+}
+
+}
+
+bot.sendMessage(chatId, reply)
+
+})
